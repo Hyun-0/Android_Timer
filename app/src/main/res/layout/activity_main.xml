@@ -27,6 +27,88 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent" >
 
+
+                    <LinearLayout
+                        android:id="@+id/timerTextViewLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:orientation="horizontal"
+                        android:visibility="invisible" >
+
+                        <Space
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+
+                        <TextView
+                            android:id="@+id/hourTextView"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@null"
+                            android:ems="10"
+                            android:maxLength="2"
+                            android:text="00"
+                            android:textAlignment="center"
+                            android:textColor="@color/white"
+                            android:textSize="50dp" />
+
+                        <TextView
+                            android:id="@+id/colonTextView1"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text=":"
+                            android:textAlignment="center"
+                            android:textColor="@color/white"
+                            android:textSize="50dp" />
+
+                        <TextView
+                            android:id="@+id/minuteTextView"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@null"
+                            android:ems="10"
+                            android:maxLength="2"
+                            android:text="00"
+                            android:textAlignment="center"
+                            android:textColor="@color/white"
+                            android:textSize="50dp" />
+
+                        <TextView
+                            android:id="@+id/colonTextView2"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text=":"
+                            android:textAlignment="center"
+                            android:textColor="@color/white"
+                            android:textSize="50dp" />
+
+                        <TextView
+                            android:id="@+id/secondTextView"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@null"
+                            android:ems="10"
+                            android:maxLength="2"
+                            android:text="00"
+                            android:textAlignment="center"
+                            android:textColor="@color/white"
+                            android:textSize="50dp" />
+
+                        <Space
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+                    </LinearLayout>
+                </FrameLayout>
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" >
+
                     <ProgressBar
                         android:id="@+id/timerProgressBar"
                         android:progressDrawable="@drawable/custom_progressbar_progress"
@@ -42,10 +124,11 @@
                     android:layout_height="match_parent" >
 
                     <LinearLayout
+                        android:id="@+id/timerEditTextLayout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_gravity="center" >
+                        android:layout_gravity="center"
+                        android:orientation="horizontal">
 
                         <Space
                             android:layout_width="match_parent"
@@ -61,7 +144,7 @@
                             android:ems="10"
                             android:hint="00"
                             android:inputType="number"
-                            android:maxLength="2"
+                            android:maxLength="3"
                             android:text="00"
                             android:textAlignment="center"
                             android:textColor="@color/white"
@@ -71,8 +154,8 @@
                             android:id="@+id/colon1"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textAlignment="center"
                             android:text=":"
+                            android:textAlignment="center"
                             android:textColor="@color/white"
                             android:textSize="50dp" />
 
@@ -85,7 +168,7 @@
                             android:ems="10"
                             android:hint="00"
                             android:inputType="number"
-                            android:maxLength="2"
+                            android:maxLength="3"
                             android:text="00"
                             android:textAlignment="center"
                             android:textColor="@color/white"
@@ -108,7 +191,7 @@
                             android:ems="10"
                             android:hint="00"
                             android:inputType="number"
-                            android:maxLength="2"
+                            android:maxLength="3"
                             android:text="00"
                             android:textAlignment="center"
                             android:textColor="@color/white"
@@ -117,8 +200,8 @@
                         <Space
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:textColor="@color/white"
-                            android:layout_weight="1" />
+                            android:layout_weight="1"
+                            android:textColor="@color/white" />
                     </LinearLayout>
                 </FrameLayout>
 
@@ -141,7 +224,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:onClick="clickHandler"
-                        android:text="Pause"
+                        android:text="PAUSE"
                         android:enabled="false"
                         android:visibility="invisible" />
 
@@ -151,7 +234,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:onClick="clickHandler"
-                        android:text="Start" />
+                        android:text="START" />
 
                     <Button
                         android:id="@+id/btnReset"
@@ -159,7 +242,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:onClick="clickHandler"
-                        android:text="Reset"
+                        android:text="RESET"
                         android:enabled="false"
                         android:visibility="invisible" />
                 </LinearLayout>
