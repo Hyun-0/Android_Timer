@@ -12,10 +12,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.RadioButton;
 import android.widget.TextView;
-
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -30,13 +28,12 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout timerTextViewLayout;   // 타이머 텍스트 출력 레이아웃 객체
     private LinearLayout timerEditViewLayout;   // 타이머 텍스트 입력 레이아웃 객체
 
-    private Button btnStart;                    // 시작버튼 객체
-    private Button btnPause;                    // 중단버튼 객체
-    private Button btnReset;                    // 리셋버튼 객체
+    private Button startButton;                 // 시작버튼 객체
+    private Button pauseButton;                 // 중단버튼 객체
+    private Button resetButton;                 // 리셋버튼 객체
 
-    private TextWatcher hourTextWatcher;        // 숫자 입력 제한을 걸기 위한 시 텍스트 옵저빙 객체
-    private TextWatcher minuteTextWatcher;      // 숫자 입력 제한을 걸기 위한 분 텍스트 옵저빙 객체
-    private TextWatcher secondTextWatcher;      // 숫자 입력 제한을 걸기 위한 초 텍스트 옵저빙 객체
+    private RadioButton freeSetRadioButton1;    // 프리셋 저장 라디오 버튼 1 객체
+    private RadioButton freeSetRadioButton2;    // 프리셋 저장 라디오 버튼 2 객체
 
     private ProgressBar timerProgressBar;       // 타이머 프로그레스 바 객체
 
@@ -44,9 +41,21 @@ public class MainActivity extends AppCompatActivity {
 
     private InputMethodManager imm;             // 키보드 숨기기 기능 위한 객체
 
-    private boolean timerRunning;               // 타이머 상태
-    private boolean timerPaused;                // 타이머 멈춤 상태
-    private boolean firstTimeRunning;           // 처음 돌리는지 상태
+    private boolean isTimerRunning;             // 타이머 상태
+    private boolean isTimerPaused;              // 타이머 멈춤 상태
+    private boolean isFirstTimeRunning;         // 처음 돌리는지 상태
+    private boolean isTimerSeparated;           // 분할 타이머 이용하는지 상태
+    private boolean isTimerLoop;                // 타이머 루프하는지 상태
+    private boolean isTimerLoopInfinite;        // 타이머 루프가 무한한지 상태
+    private boolean isFirstTimerStarting;       // 첫번째 타이머가 시작하는지
+    private boolean isSecondTimerStarting;      // 두번째 타이머가 시작하는지
+
+    /*
+     * Normal :             isTimerSeparated false  isTimerLoop false   isTimerLoopInfinite false
+     * Separate :           isTimerSeparated true   isTimerLoop false   isTimerLoopInfinite false
+     * Loop (Once) :        isTimerSeparated true   isTimerLoop true    isTimerLoopInfinite false
+     * Loop (infinite) :    isTimerSeparated true   isTimerLoop true    isTimerLoopInfinite true
+     */
 
     private long initialTime;                   // 타이머에 처음 넣은 시간
     private long time;                          // 타이머 세팅 시간
@@ -69,14 +78,27 @@ public class MainActivity extends AppCompatActivity {
         timerTextViewLayout = (LinearLayout)findViewById(R.id.timerTextViewLayout);
         timerEditViewLayout = (LinearLayout)findViewById(R.id.timerEditTextLayout);
 
-        btnStart = (Button)findViewById(R.id.btnStart);
-        btnPause = (Button)findViewById(R.id.btnPause);
-        btnReset = (Button)findViewById(R.id.btnReset);
+        startButton = (Button)findViewById(R.id.startButton);
+        pauseButton = (Button)findViewById(R.id.pauseButton);
+        resetButton = (Button)findViewById(R.id.resetButton);
+
+        freeSetRadioButton1 = (RadioButton)findViewById(R.id.freeSetRadioButton1);
+        freeSetRadioButton2 = (RadioButton)findViewById(R.id.freeSetRadioButton2);
 
         timerProgressBar = (ProgressBar)findViewById(R.id.timerProgressBar);
 
-        hourEditText.addTextChangedListener(
-                hourTextWatcher = new TextWatcher() {
+
+        isTimerRunning = false;
+        isTimerPaused = false;
+        isFirstTimeRunning = true;
+        isTimerSeparated = true;
+        isTimerLoop = true;
+        isTimerLoopInfinite = true;
+        isFirstTimerStarting = true;
+        isSecondTimerStarting = false;
+
+
+        hourEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
                 ;
@@ -106,6 +128,19 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
                 hourEditText.setSelection(hourEditText.length());
+
+                if (isTimerSeparated == true) {
+                    String changedText = hourEditText.getText().toString();
+                    if (freeSetRadioButton1.isChecked() == true) {
+                        String[] timeArray = freeSetRadioButton1.getText().toString().split(":");
+                        freeSetRadioButton1.setText(changedText + ":" + timeArray[1] + ":" + timeArray[2]);
+                    }
+
+                    if (freeSetRadioButton2.isChecked() == true) {
+                        String[] timeArray = freeSetRadioButton2.getText().toString().split(":");
+                        freeSetRadioButton2.setText(changedText + ":" + timeArray[1] + ":" + timeArray[2]);
+                    }
+                }
             }
 
             @Override
@@ -116,7 +151,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        minuteEditText.addTextChangedListener(minuteTextWatcher = new TextWatcher() {
+        minuteEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
                 ;
@@ -139,12 +174,24 @@ public class MainActivity extends AppCompatActivity {
                     else {
                         ;
                     }
-
-
                     if (Long.parseLong(minuteEditText.getText().toString()) >= 60) {
                         minuteEditText.setText("59");
                     }
                 }
+
+                if (isTimerSeparated == true) {
+                    String changedText = minuteEditText.getText().toString();
+                    if (freeSetRadioButton1.isChecked() == true) {
+                        String[] timeArray = freeSetRadioButton1.getText().toString().split(":");
+                        freeSetRadioButton1.setText(timeArray[0] + ":" + changedText + ":" + timeArray[2]);
+                    }
+
+                    if (freeSetRadioButton2.isChecked() == true) {
+                        String[] timeArray = freeSetRadioButton2.getText().toString().split(":");
+                        freeSetRadioButton2.setText(timeArray[0] + ":" + changedText + ":" + timeArray[2]);
+                    }
+                }
+
                 minuteEditText.setSelection(minuteEditText.length());
             }
 
@@ -156,7 +203,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        secondEditText.addTextChangedListener(secondTextWatcher = new TextWatcher() {
+        secondEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
                 ;
@@ -186,6 +233,19 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
                 secondEditText.setSelection(secondEditText.length());
+
+                if (isTimerSeparated == true) {
+                    String changedText = secondEditText.getText().toString();
+                    if (freeSetRadioButton1.isChecked() == true) {
+                        String[] timeArray = freeSetRadioButton1.getText().toString().split(":");
+                        freeSetRadioButton1.setText(timeArray[0] + ":" + timeArray[1] + ":" + changedText);
+                    }
+
+                    if (freeSetRadioButton2.isChecked() == true) {
+                        String[] timeArray = freeSetRadioButton2.getText().toString().split(":");
+                        freeSetRadioButton2.setText(timeArray[0] + ":" + timeArray[1] + ":" + changedText);
+                    }
+                }
             }
 
             @Override
@@ -196,9 +256,39 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        timerRunning = false;
-        timerPaused = false;
-        firstTimeRunning = true;
+
+        freeSetRadioButton1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (isTimerRunning == false && isTimerPaused == false) {
+                    freeSetRadioButton1.setChecked(true);
+                    freeSetRadioButton2.setChecked(false);
+                    changeTimerToFreeSet(true, false);
+                }
+                else {
+                    if (freeSetRadioButton2.isChecked() == true) {
+                        freeSetRadioButton1.setChecked(false);
+                    }
+                }
+            }
+        });
+
+        freeSetRadioButton2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (isTimerRunning == false && isTimerPaused == false) {
+                    freeSetRadioButton2.setChecked(true);
+                    freeSetRadioButton1.setChecked(false);
+                    changeTimerToFreeSet(false, true);
+                }
+                else {
+                    if (freeSetRadioButton1.isChecked() == true) {
+                        freeSetRadioButton2.setChecked(false);
+                    }
+                }
+            }
+        });
+
         return;
     }
 
@@ -218,16 +308,26 @@ public class MainActivity extends AppCompatActivity {
         switch(view.getId())
         {
             // 시작
-            case R.id.btnStart:
-                startTimerTask();
+            case R.id.startButton:
+                if (isTimerLoop == false) {
+                    startTimerTask();
+                }
+                else {
+                    startTimerTaskLoopVer();
+                }
                 break;
             //멈춤
-            case R.id.btnPause:
+            case R.id.pauseButton:
                 pauseTimerTask();
                 break;
             // 리셋
-            case R.id.btnReset :
-                resetTimerTask();
+            case R.id.resetButton:
+                if (isTimerLoop == false) {
+                    resetTimerTask();
+                }
+                else {
+                    resetTimerTaskLoopVer();
+                }
                 break;
         }
         return;
@@ -247,30 +347,30 @@ public class MainActivity extends AppCompatActivity {
     private void hideButton(boolean hideStartButton, boolean hidePauseButton, boolean hideResetButton)
     {
         if (hideStartButton == true) {
-            btnStart.setEnabled(true);
-            btnStart.setVisibility(View.VISIBLE);
+            startButton.setEnabled(true);
+            startButton.setVisibility(View.VISIBLE);
         }
         else {
-            btnStart.setEnabled(false);
-            btnStart.setVisibility(View.INVISIBLE);
+            startButton.setEnabled(false);
+            startButton.setVisibility(View.INVISIBLE);
         }
 
         if (hidePauseButton == true) {
-            btnPause.setEnabled(true);
-            btnPause.setVisibility(View.VISIBLE);
+            pauseButton.setEnabled(true);
+            pauseButton.setVisibility(View.VISIBLE);
         }
         else {
-            btnPause.setEnabled(false);
-            btnPause.setVisibility(View.INVISIBLE);
+            pauseButton.setEnabled(false);
+            pauseButton.setVisibility(View.INVISIBLE);
         }
 
         if (hideResetButton == true) {
-            btnReset.setEnabled(true);
-            btnReset.setVisibility(View.VISIBLE);
+            resetButton.setEnabled(true);
+            resetButton.setVisibility(View.VISIBLE);
         }
         else {
-            btnReset.setEnabled(false);
-            btnReset.setVisibility(View.INVISIBLE);
+            resetButton.setEnabled(false);
+            resetButton.setVisibility(View.INVISIBLE);
         }
         return;
     }
@@ -279,8 +379,8 @@ public class MainActivity extends AppCompatActivity {
     // Start 버튼 클릭시 실행
     private void startTimerTask()
     {
-        if (timerRunning == false) {
-            if (firstTimeRunning == true) {
+        if (isTimerRunning == false) {
+            if (isFirstTimeRunning == true) {
                 Long hour = Long.parseLong(hourEditText.getText().toString());
                 Long minute = Long.parseLong(minuteEditText.getText().toString());
                 Long second = Long.parseLong(secondEditText.getText().toString());
@@ -291,13 +391,13 @@ public class MainActivity extends AppCompatActivity {
                 initialTime = time;
                 updateTimeTextView(time);
             }
-            else if (timerPaused == true) {
+            else if (isTimerPaused == true) {
                 Long hour = Long.parseLong(hourTextView.getText().toString());
                 Long minute = Long.parseLong(minuteTextView.getText().toString());
                 Long second = Long.parseLong(secondTextView.getText().toString());
                 time = (hour * 3600 + minute * 60 + second * 1) * 1000;
                 updateTimeTextView(time);
-                timerPaused = false;
+                isTimerPaused = false;
             }
             else {
                 time = currentTime;
@@ -321,8 +421,120 @@ public class MainActivity extends AppCompatActivity {
 
             hideButton(false, true, true);
 
-            timerRunning = true;
-            firstTimeRunning = false;
+            isTimerRunning = true;
+            isFirstTimeRunning = false;
+        }
+        return;
+    }
+
+    // 루프시 타이머 실행 함수
+    private void startTimerTaskLoopVer()
+    {
+        if (isTimerRunning == false) {
+            if (isFirstTimerStarting == true) {
+                if (isFirstTimeRunning == true) {
+                    freeSetRadioButton1.setChecked(true);
+                    freeSetRadioButton2.setChecked(false);
+                    changeTimerToFreeSet(true, false);
+
+                    Long hour = Long.parseLong(hourEditText.getText().toString());
+                    Long minute = Long.parseLong(minuteEditText.getText().toString());
+                    Long second = Long.parseLong(secondEditText.getText().toString());
+                    time = (hour * 3600 + minute * 60 + second * 1) * 1000;
+                    if (time == 0) {
+                        return;
+                    }
+                    initialTime = time;
+                    updateTimeTextView(time);
+                } else if (isTimerPaused == true) {
+                    Long hour = Long.parseLong(hourTextView.getText().toString());
+                    Long minute = Long.parseLong(minuteTextView.getText().toString());
+                    Long second = Long.parseLong(secondTextView.getText().toString());
+                    time = (hour * 3600 + minute * 60 + second * 1) * 1000;
+                    updateTimeTextView(time);
+                    isTimerPaused = false;
+                } else {
+                    time = currentTime;
+                }
+
+                onOffTimerLayouts(false, true);
+
+                countDownTimer = new CountDownTimer(time, 10) {
+                    @Override
+                    public void onTick(long l) {
+                        currentTime = l;
+                        updateTimeTextView(currentTime);
+                        updateTimerProgressBar();
+                    }
+
+                    @Override
+                    public void onFinish() {
+                        countDownTimer.cancel();
+
+                        isFirstTimerStarting = false;
+                        isSecondTimerStarting = true;
+
+                        timerProgressBar.setProgress(1000);
+                        isFirstTimeRunning = true;
+                        isTimerRunning = false;
+
+                        startTimerTaskLoopVer();
+                    }
+                }.start();
+            }
+            if (isSecondTimerStarting == true) {
+                if (isFirstTimeRunning == true) {
+                    freeSetRadioButton1.setChecked(false);
+                    freeSetRadioButton2.setChecked(true);
+                    changeTimerToFreeSet(false, true);
+
+                    Long hour = Long.parseLong(hourEditText.getText().toString());
+                    Long minute = Long.parseLong(minuteEditText.getText().toString());
+                    Long second = Long.parseLong(secondEditText.getText().toString());
+                    time = (hour * 3600 + minute * 60 + second * 1) * 1000;
+                    if (time == 0) {
+                        return;
+                    }
+                    initialTime = time;
+                    updateTimeTextView(time);
+                } else if (isTimerPaused == true) {
+                    Long hour = Long.parseLong(hourTextView.getText().toString());
+                    Long minute = Long.parseLong(minuteTextView.getText().toString());
+                    Long second = Long.parseLong(secondTextView.getText().toString());
+                    time = (hour * 3600 + minute * 60 + second * 1) * 1000;
+                    updateTimeTextView(time);
+                    isTimerPaused = false;
+                } else {
+                    time = currentTime;
+                }
+
+                onOffTimerLayouts(false, true);
+
+                countDownTimer = new CountDownTimer(time, 10) {
+                    @Override
+                    public void onTick(long l) {
+                        currentTime = l;
+                        updateTimeTextView(currentTime);
+                        updateTimerProgressBar();
+                    }
+
+                    @Override
+                    public void onFinish() {
+                        resetTimerTaskLoopVer();
+
+                        if (isTimerLoopInfinite == true) {
+                            startTimerTaskLoopVer();
+                        }
+                    }
+                }.start();
+            }
+
+
+
+            hideButton(false, true, true);
+
+            isTimerRunning = true;
+            isFirstTimeRunning = false;
         }
         return;
     }
@@ -449,15 +661,20 @@ public class MainActivity extends AppCompatActivity {
     // Pause 버튼 클릭시 실행
     private void pauseTimerTask()
     {
-        if (timerRunning != false && timerPaused == false) {
+        if (isTimerRunning != false && isTimerPaused == false) {
             countDownTimer.cancel();
-            btnPause.setText("CONTINUE");
-            timerPaused = true;
-            timerRunning = false;
+            pauseButton.setText("CONTINUE");
+            isTimerPaused = true;
+            isTimerRunning = false;
         }
         else {
-            btnPause.setText("PAUSE");
-            startTimerTask();
+            pauseButton.setText("PAUSE");
+            if (isTimerLoop == false) {
+                startTimerTask();
+            }
+            else {
+                startTimerTaskLoopVer();
+            }
         }
         return;
     }
@@ -472,10 +689,48 @@ public class MainActivity extends AppCompatActivity {
 
         timerProgressBar.setProgress(1000);
 
-        timerRunning = false;
-        firstTimeRunning = true;
+        isTimerRunning = false;
+        isFirstTimeRunning = true;
 
         hideButton(true, false, false);
         return;
+    }
+
+    // 루프시 타이머 리셋 함수
+    private void resetTimerTaskLoopVer()
+    {
+        countDownTimer.cancel();
+        freeSetRadioButton1.setChecked(true);
+        freeSetRadioButton2.setChecked(false);
+        changeTimerToFreeSet(true, false);
+        isFirstTimerStarting = true;
+        isSecondTimerStarting = false;
+        onOffTimerLayouts(true, false);
+
+        timerProgressBar.setProgress(1000);
+
+        isTimerRunning = false;
+        isFirstTimeRunning = true;
+
+        hideButton(true, false, false);
+        return;
+    }
+
+    // 프리셋 타이머로 옮기는 함수
+    private void changeTimerToFreeSet(boolean isFreeSet1 , boolean isFreeSet2) {
+        if (isTimerSeparated == true) {
+            if (isFreeSet1 == true) {
+                String[] timeArray = freeSetRadioButton1.getText().toString().split(":");
+                hourEditText.setText(timeArray[0]);
+                minuteEditText.setText(timeArray[1]);
+                secondEditText.setText(timeArray[2]);
+            }
+            if (isFreeSet2 == true) {
+                String[] timeArray = freeSetRadioButton2.getText().toString().split(":");
+                hourEditText.setText(timeArray[0]);
+                minuteEditText.setText(timeArray[1]);
+                secondEditText.setText(timeArray[2]);
+            }
+        }
     }
 }
