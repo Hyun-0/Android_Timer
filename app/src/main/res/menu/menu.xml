@@ -1,0 +1,23 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".MainActivity">
+
+    <item android:id="@+id/timerModeNormal"
+        android:title="Normal"
+        app:showAsAction="never"
+        android:visible="true"/>
+    <item android:id="@+id/timerModePreset"
+        android:title="Preset"
+        app:showAsAction="never"
+        android:visible="true"/>
+    <item android:id="@+id/timerModeLoopOnce"
+        android:title="Loop (Once)"
+        app:showAsAction="never"
+        android:visible="true"/>
+    <item android:id="@+id/timerModeLoopInfinite"
+        android:title="Loop (Infinite)"
+        app:showAsAction="never"
+        android:visible="true"/>
+
+</menu>
